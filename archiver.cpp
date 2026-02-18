@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "crc32.hpp"
+
 namespace fs = std::filesystem;
 
 // ============================================
@@ -142,12 +144,16 @@ private:
     std::vector<char> buffer(size);
     file.read(buffer.data(), size);
 
+    // 计算 CRC32 校验和
+    CRC32 crc32;
+    uint32_t checksum = crc32.calculate(buffer);
+
     // 填充 Entry Header
     EntryHeader entry{.path_length = static_cast<uint32_t>(rel_path.size()),
                       .content_size = static_cast<uint64_t>(size),
                       .modified_time =
                           current_timestamp(), // 简化处理，实际应取文件 mtime
-                      .checksum = 0,           // TODO: 计算 CRC32
+                      .checksum = checksum,    // CRC32 校验和
                       .permissions = 0644};
 
     // 写入：Header -> 路径 -> 内容
@@ -168,6 +174,17 @@ private:
     std::vector<char> buffer(entry.content_size);
     archive.read(buffer.data(), entry.content_size);
 
+    // 验证 CRC32 校验和
+    CRC32 crc32;
+    uint32_t calculated_crc = crc32.calculate(buffer);
+    if (calculated_crc != entry.checksum) {
+      throw std::runtime_error(
+          "CRC32 mismatch for file: " + rel_path +
+          " (expected: " + std::to_string(entry.checksum) +
+          ", got: " + std::to_string(calculated_crc) + ")"
+      );
+    }
+
     // 创建目标路径（自动创建父目录）
     fs::path out_path = target_dir / rel_path;
     fs::create_directories(out_path.parent_path());
@@ -179,7 +196,7 @@ private:
     // 恢复权限（简化版）
     fs::permissions(out_path, static_cast<fs::perms>(entry.permissions));
 
-    std::cout << "Extracted: " << rel_path << "\n";
+    std::cout << "Extracted: " << rel_path << " (CRC32 OK)\n";
   }
 
   uint64_t current_timestamp() {
