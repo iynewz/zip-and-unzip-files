@@ -8,8 +8,12 @@
  * 4. CRC 校验失败检测
  *
  * 使用方法
- * # 编译并运行
- * clang++ -std=c++17 -o test_crc32 test_crc32.cpp && ./test_crc32
+ * # 编译并运行（从项目根目录）
+ * clang++ -std=c++17 -Iinclude -o test_crc32 tests/test_crc32.cpp &&
+ * ./test_crc32
+ *
+ * # 或使用 Makefile
+ * make test
  */
 
 #include <cstdint>
@@ -21,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#include "crc32.hpp"
+#include "../include/crc32.hpp"
 
 namespace fs = std::filesystem;
 

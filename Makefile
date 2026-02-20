@@ -2,14 +2,18 @@
 
 # Compiler settings
 CXX := clang++
-CXXFLAGS := -std=c++17 -Wall -Wextra -O2
+CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -Iinclude
 
-# Target executable
+# Directories
+SRC_DIR := src
+
+# Source files
+SRCS := $(SRC_DIR)/main.cpp $(SRC_DIR)/archiver.cpp
 TARGET := kar
-SRC := archiver.cpp
 
 # Test settings
-TEST_SRC := test_crc32.cpp
+TEST_DIR := tests
+TEST_SRC := $(TEST_DIR)/test_crc32.cpp
 TEST_TARGET := test_crc32
 
 # Default target
@@ -18,14 +22,14 @@ TEST_TARGET := test_crc32
 all: $(TARGET)
 
 # Build main executable
-$(TARGET): $(SRC)
+$(TARGET): $(SRCS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 # Build and run tests
 test: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
-$(TEST_TARGET): $(TEST_SRC) crc32.hpp
+$(TEST_TARGET): $(TEST_SRC) include/crc32.hpp
 	$(CXX) $(CXXFLAGS) -o $@ $(TEST_SRC)
 
 # Clean build artifacts

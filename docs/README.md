@@ -38,7 +38,7 @@ make rebuild
 
 示例：
 ```bash
-./kar pack test_dir backup.kar
+./kar pack tests/fixtures backup.kar
 ```
 
 #### 2. 列出归档内容
@@ -105,31 +105,39 @@ Created: 2024-01-15 10:30:45
 
 ```
 .
-├── archiver.cpp      # 主程序源码
-├── crc32.hpp         # CRC32 校验头文件
+├── src/              # 源代码目录
+│   ├── main.cpp      # CLI 入口
+│   ├── archiver.cpp  # Archiver 实现
+│   ├── archiver.hpp  # Archiver 声明
+│   ├── format.hpp    # 文件格式结构体
+│   └── utils.hpp     # 工具函数
+├── include/          # 头文件目录
+│   └── crc32.hpp     # CRC32 实现
+├── tests/            # 测试目录
+│   ├── test_crc32.cpp
+│   └── fixtures/     # 测试数据
 ├── kar               # 编译后的可执行文件
 ├── Makefile          # 构建配置
 ├── backup.kar        # 示例归档文件
-├── test_dir/         # 测试目录
 ├── docs/             # 项目文档
 └── README.md         # 本文件
 ```
 
 ## 测试
 
-项目包含 `test_dir` 目录用于手动测试：
+项目包含 `tests/fixtures` 目录用于手动测试：
 
 ```bash
 # 创建测试归档
 make
-./kar pack test_dir test.kar
+./kar pack tests/fixtures test.kar
 
 # 查看内容
 ./kar list test.kar
 
 # 解压并对比
 ./kar unpack test.kar test_output
-diff -r test_dir test_output
+diff -r tests/fixtures test_output
 ```
 
 运行单元测试：

@@ -15,17 +15,26 @@ This is a C++17 command-line archive tool that packs/unpacks directories into a 
 
 ```
 .
-├── archiver.cpp      # Main source file (all logic in single file)
-├── kar               # Compiled executable (Mach-O 64-bit ARM64)
-├── .clangd           # LSP configuration (specifies C++17 standard)
-├── backup.kar        # Sample archive file for testing
-├── docs/
-│   ├── prd.md        # Product requirements document (Chinese)
-│   └── tasks.md      # Tasks tracking (currently empty)
-└── test_dir/         # Test directory for development
-    ├── a.txt
-    └── subdir/
-        └── b.txt
+├── src/                   # Source code
+│   ├── main.cpp           # CLI entry point
+│   ├── archiver.hpp       # Archiver class declaration
+│   ├── archiver.cpp       # Archiver class implementation
+│   ├── format.hpp         # File format structures (FileHeader, EntryHeader)
+│   └── utils.hpp          # Utility functions (format_size, timestamp)
+├── tests/                 # Test suite
+│   ├── test_crc32.cpp     # CRC32 unit tests
+│   └── fixtures/          # Test data
+│       ├── a.txt
+│       └── subdir/
+│           └── b.txt
+├── include/
+│   └── crc32.hpp          # Shared CRC32 header
+├── kar                    # Compiled executable
+├── backup.kar             # Sample archive file for testing
+├── .clangd                # LSP configuration
+└── docs/
+    ├── prd.md             # Product requirements document (Chinese)
+    └── tasks.md           # Tasks tracking
 ```
 
 ## Build Instructions
@@ -53,10 +62,10 @@ make rebuild
 
 ```bash
 # Using clang++
-clang++ -std=c++17 -o kar archiver.cpp
+clang++ -std=c++17 -o kar src/main.cpp src/archiver.cpp
 
 # Using g++
-g++ -std=c++17 -o kar archiver.cpp
+g++ -std=c++17 -o kar src/main.cpp src/archiver.cpp
 ```
 
 The `.clangd` file contains LSP configuration specifying C++17 standard:
@@ -83,8 +92,8 @@ The `kar` executable provides three commands:
 ### Example Usage
 
 ```bash
-# Create archive from test_dir
-./kar pack test_dir backup.kar
+# Create archive from tests/fixtures
+./kar pack tests/fixtures backup.kar
 
 # List archive contents
 ./kar list backup.kar
@@ -128,17 +137,17 @@ struct EntryHeader {
 
 ## Code Organization
 
-The entire implementation is contained in `archiver.cpp`:
+代码按功能拆分到 `src/` 目录下：
 
-1. **Structures** (lines 15-35): Binary format definitions with `#pragma pack`
-2. **Archiver Class** (lines 40-204): Core functionality
+1. **format.hpp**: Binary format structures (`FileHeader`, `EntryHeader`) with `#pragma pack`
+2. **utils.hpp**: Utility functions (`current_timestamp()`, `format_size()`)
+3. **archiver.hpp/.cpp**: Core `Archiver` class
    - `pack()`: Recursively collect files and write archive
    - `unpack()`: Read archive and restore files
    - `list()`: Display archive contents
    - `write_entry()`: Serialize single file to archive
    - `read_entry()`: Deserialize single file from archive
-   - Helper methods: `current_timestamp()`, `format_size()`
-3. **CLI Interface** (lines 209-242): Main function with argument parsing
+4. **main.cpp**: CLI interface with argument parsing
 
 ## Development Roadmap
 
@@ -161,17 +170,17 @@ Per `docs/prd.md`, the project is planned in three phases:
 
 ## Testing
 
-Manual testing with `test_dir/`:
+Manual testing with `tests/fixtures/`:
 ```bash
 # Create archive
-./kar pack test_dir test.kar
+./kar pack tests/fixtures test.kar
 
 # Verify contents
 ./kar list test.kar
 
 # Extract and compare
 ./kar unpack test.kar test_output
-diff -r test_dir test_output
+diff -r tests/fixtures test_output
 ```
 
 ## Code Style Guidelines
