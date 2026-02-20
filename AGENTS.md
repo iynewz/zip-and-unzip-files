@@ -30,7 +30,26 @@ This is a C++17 command-line archive tool that packs/unpacks directories into a 
 
 ## Build Instructions
 
-There is no Makefile or CMake configuration. Compile directly with:
+项目已配置 Makefile，推荐使用方法：
+
+```bash
+# 编译主程序（默认使用 clang++）
+make
+
+# 使用 g++ 编译
+make CXX=g++
+
+# 运行测试
+make test
+
+# 清理构建产物
+make clean
+
+# 重新构建
+make rebuild
+```
+
+如需手动编译（不使用 Makefile）：
 
 ```bash
 # Using clang++
