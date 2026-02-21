@@ -86,12 +86,59 @@ void Archiver::unpack(const fs::path &archive_path,
   std::cout << "Archive version: " << global_header.version << "\n";
   std::cout << "Total entries: " << global_header.entry_count << "\n\n";
 
-  // 逐个读取文件
-  for (uint32_t i = 0; i < global_header.entry_count; ++i) {
-    read_entry(archive, target_dir);
+  const uint32_t total_entries = global_header.entry_count;
+
+  // 逐个读取文件，显示进度条
+  for (uint32_t i = 0; i < total_entries; ++i) {
+    // 先读取 entry header 获取文件名
+    EntryHeader entry;
+    archive.read(reinterpret_cast<char *>(&entry), sizeof(entry));
+
+    std::string rel_path(entry.path_length, '\0');
+    archive.read(rel_path.data(), entry.path_length);
+
+    // 计算并显示进度
+    int progress = static_cast<int>((i + 1) * 100 / total_entries);
+    int bar_width = 30;
+    int pos = static_cast<int>(bar_width * (i + 1) / total_entries);
+
+    std::cout << "\r[";
+    for (int j = 0; j < bar_width; ++j) {
+      if (j < pos)
+        std::cout << "█";
+      else
+        std::cout << "░";
+    }
+    std::cout << "] " << std::setw(3) << progress << "% ";
+    std::cout << "(" << (i + 1) << "/" << total_entries << ") ";
+    std::cout << rel_path;
+    std::cout.flush();
+
+    // 读取内容并解压
+    std::vector<char> buffer(entry.content_size);
+    archive.read(buffer.data(), entry.content_size);
+
+    // 验证 CRC32 校验和
+    CRC32 crc32;
+    uint32_t calculated_crc = crc32.calculate(buffer);
+    if (calculated_crc != entry.checksum) {
+      throw std::runtime_error("CRC32 mismatch for file: " + rel_path +
+                               " (expected: " + std::to_string(entry.checksum) +
+                               ", got: " + std::to_string(calculated_crc) + ")");
+    }
+
+    // 创建目标路径并写入文件
+    fs::path out_path = target_dir / rel_path;
+    fs::create_directories(out_path.parent_path());
+
+    std::ofstream out_file(out_path, std::ios::binary);
+    out_file.write(buffer.data(), entry.content_size);
+
+    // 恢复权限
+    fs::permissions(out_path, static_cast<fs::perms>(entry.permissions));
   }
 
-  std::cout << "\nExtracted to: " << target_dir << "\n";
+  std::cout << "\n\nExtracted to: " << target_dir << "\n";
 }
 
 void Archiver::list(const fs::path &archive_path) {
