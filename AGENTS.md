@@ -170,7 +170,8 @@ Per `docs/prd.md`, the project is planned in three phases:
 
 ## Testing
 
-Manual testing with `tests/fixtures/`:
+### 基础测试 (小规模)
+使用 `tests/fixtures/` 进行快速验证：
 ```bash
 # Create archive
 ./kar pack tests/fixtures test.kar
@@ -182,6 +183,88 @@ Manual testing with `tests/fixtures/`:
 ./kar unpack test.kar test_output
 diff -r tests/fixtures test_output
 ```
+
+### 大规模性能测试
+使用 `scripts/generate_test_data.py` 生成大量测试数据：
+
+```bash
+# 标准测试数据 (~80MB，用于快速回归测试)
+make test-data
+
+# 压力测试数据 (~500MB-1GB，用于专业性能评估)
+make stress-data
+
+# 或直接使用脚本
+python3 scripts/generate_test_data.py
+
+# 自定义测试数据规模
+python3 scripts/generate_test_data.py --small-files 1000 --large-files 10
+
+# 清理并重新生成
+make test-data-clean && make test-data
+make stress-data-clean && make stress-data
+```
+
+### 基准测试
+完整性能测试流程（结果自动保存到 `benchmark_results.txt`）：
+
+```bash
+# 标准基准测试 (~80MB 数据，适合快速回归测试)
+make benchmark
+
+# 压力基准测试 (~500MB-1GB 数据，适合专业性能评估)
+make benchmark-stress
+
+# 查看历史结果
+cat benchmark_results.txt
+
+# 清理基准测试产物
+make benchmark-clean
+
+# 清理所有 (包括测试数据)
+make clean-all
+```
+
+**专业建议**：
+- **标准模式** (`make benchmark`): 数据量约 80MB，打包耗时 ~0.5s，适合快速回归测试
+- **压力模式** (`make benchmark-stress`): 数据量约 500MB-1GB，打包耗时 5-30s，减少计时误差，适合：
+  - 压缩算法性能对比
+  - IO 瓶颈分析
+  - 多轮测试取平均值
+
+**基准测试输出示例：**
+```
+测试时间: 2026-02-21 17:15:30
+测试数据: tests/large_fixtures
+文件数量: 188
+数据大小: 77M
+================================
+
+1. 打包测试...
+[进度条...]
+Archive created: "benchmark.kar" (188 files)
+      0.47 real         0.15 user         0.31 sys
+
+2. 列出归档内容...
+[输出...]
+      0.01 real         0.00 user         0.00 sys
+
+3. 解包测试...
+[进度条...]
+Extracted to: "benchmark_output"
+      0.35 real         0.05 user         0.28 sys
+
+4. 验证文件一致性...
+✓ 文件一致
+```
+
+### 测试数据结构
+生成的 `tests/large_fixtures/` 包含以下场景：
+- `small_files/`: 小文件密集场景 (1-10 KB)，分散在多个子目录
+- `medium_files/`: 中等文件 (100 KB - 1 MB)
+- `large_files/`: 大文件 (5-20 MB)
+- `deep_structure/`: 深层嵌套目录 (10层)
+- `mixed_project/`: 模拟真实项目结构 (源码、配置、日志)
 
 ## Code Style Guidelines
 
